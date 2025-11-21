@@ -1,5 +1,5 @@
 # NOTE: intentionally includes older dependencies for dependency-scanning tests.
-Flask==2.3.1       # Updated Flask to fix CVE-2023-30861 - session cookie caching vulnerability
-requests==2.18.4   # older requests with known issues
+Flask==1.0.2       # older Flask release
+requests>=2.20.0   # Updated requests to fix CVE-2018-18074 - credentials exposure vulnerability
 PyYAML>=5.4        # Updated PyYAML to fix CVE-2020-14343 - arbitrary code execution vulnerability
 boto3==1.7.0       # older boto3 version
