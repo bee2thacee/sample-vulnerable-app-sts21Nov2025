@@ -3,7 +3,25 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Sample CloudFormation template for an application
 
 Resources:
-  # Create the replication role first
+  AppBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: sample-app-bucket-12345
+      AccessControl: Private                 # Fixed: Changed from PublicRead to Private to prevent public access
+      # Added cross-region replication configuration for improved data durability and availability
+      ReplicationConfiguration:
+        Role: !GetAtt ReplicationRole.Arn
+        Rules:
+          - Destination:
+              Bucket: !Sub 'arn:aws:s3:::${AWS::StackName}-replica'
+              # Fixed: Removed invalid Region property and added StorageClass instead
+              StorageClass: STANDARD
+            Status: Enabled
+            Priority: 1
+            DeleteMarkerReplication:
+              Status: Enabled
+
+  # IAM role for S3 replication
   ReplicationRole:
     Type: AWS::IAM::Role
     Properties:
@@ -14,7 +32,6 @@ Resources:
             Principal:
               Service: s3.amazonaws.com
             Action: sts:AssumeRole
-      # Fixed: Removed direct bucket ARN references to break circular dependency
       Policies:
         - PolicyName: S3ReplicationPolicy
           PolicyDocument:
@@ -24,37 +41,19 @@ Resources:
                 Action:
                   - s3:GetReplicationConfiguration
                   - s3:ListBucket
-                Resource: !Sub 'arn:aws:s3:::${AWS::StackName}-*'
+                Resource: !GetAtt AppBucket.Arn
               - Effect: Allow
                 Action:
                   - s3:GetObjectVersionForReplication
                   - s3:GetObjectVersionAcl
                   - s3:GetObjectVersionTagging
-                Resource: !Sub 'arn:aws:s3:::${AWS::StackName}-*/*'
+                Resource: !Sub '${AppBucket.Arn}/*'
               - Effect: Allow
                 Action:
                   - s3:ReplicateObject
                   - s3:ReplicateDelete
                   - s3:ReplicateTags
                 Resource: !Sub 'arn:aws:s3:::${AWS::StackName}-replica/*'
-
-  # Create the bucket with replication configuration
-  AppBucket:
-    Type: AWS::S3::Bucket
-    DependsOn: ReplicationRole  # Explicit dependency
-    Properties:
-      BucketName: sample-app-bucket-12345
-      AccessControl: Private
-      ReplicationConfiguration:
-        Role: !GetAtt ReplicationRole.Arn
-        Rules:
-          - Destination:
-              Bucket: !Sub 'arn:aws:s3:::${AWS::StackName}-replica'
-              Region: us-west-2
-            Status: Enabled
-            Priority: 1
-            DeleteMarkerReplication:
-              Status: Enabled
 
   AppRole:
     Type: AWS::IAM::Role
