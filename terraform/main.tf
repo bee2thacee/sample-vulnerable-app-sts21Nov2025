@@ -17,11 +17,11 @@ resource "aws_s3_bucket" "app_bucket" {
   acl    = "public-read"                        # Issue 1: public-read ACL
 }
 
-# Fixed: Replaced overly permissive IAM policy with least privilege access
 resource "aws_iam_policy" "app_policy" {
-  name        = "app-restricted-access"
-  description = "Policy with least privilege access for instances"
+  name        = "app-full-access"
+  description = "Policy used by instances"
 
+  # Fixed: Replaced wildcard "*" with specific required actions
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -30,6 +30,7 @@ resource "aws_iam_policy" "app_policy" {
       "Effect": "Allow",
       "Action": [
         "s3:GetObject",
+        "s3:PutObject",
         "s3:ListBucket"
       ],
       "Resource": [
