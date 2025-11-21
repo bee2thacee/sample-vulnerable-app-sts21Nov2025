@@ -3,7 +3,7 @@ import sqlite3
 import subprocess
 import pickle
 import os
-import ast  # Added for safe evaluation
+import ast  # Added for safe literal evaluation
 
 # hardcoded API token (Issue 1)
 API_TOKEN = "AKIAEXAMPLERAWTOKEN12345"
@@ -40,6 +40,7 @@ def deserialize_blob(blob):
             blob_str = blob.decode('utf-8')
         else:
             blob_str = str(blob)
+        # Use ast.literal_eval for safe evaluation
         return ast.literal_eval(blob_str)
     except (ValueError, SyntaxError) as e:
         raise ValueError(f"Invalid or unsafe data format: {str(e)}")
