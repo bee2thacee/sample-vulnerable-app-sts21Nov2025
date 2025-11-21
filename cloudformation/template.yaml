@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Sample CloudFormation template for an application
 
 Resources:
-  # Moved ReplicationRole before AppBucket to resolve circular dependency
+  # Create the replication role first
   ReplicationRole:
     Type: AWS::IAM::Role
     Properties:
@@ -14,23 +14,23 @@ Resources:
             Principal:
               Service: s3.amazonaws.com
             Action: sts:AssumeRole
+      # Fixed: Removed direct bucket ARN references to break circular dependency
       Policies:
         - PolicyName: S3ReplicationPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-              # Modified permissions to use bucket ARNs directly instead of GetAtt
               - Effect: Allow
                 Action:
                   - s3:GetReplicationConfiguration
                   - s3:ListBucket
-                Resource: !Sub 'arn:aws:s3:::sample-app-bucket-12345'
+                Resource: !Sub 'arn:aws:s3:::${AWS::StackName}-*'
               - Effect: Allow
                 Action:
                   - s3:GetObjectVersionForReplication
                   - s3:GetObjectVersionAcl
                   - s3:GetObjectVersionTagging
-                Resource: !Sub 'arn:aws:s3:::sample-app-bucket-12345/*'
+                Resource: !Sub 'arn:aws:s3:::${AWS::StackName}-*/*'
               - Effect: Allow
                 Action:
                   - s3:ReplicateObject
@@ -38,13 +38,15 @@ Resources:
                   - s3:ReplicateTags
                 Resource: !Sub 'arn:aws:s3:::${AWS::StackName}-replica/*'
 
+  # Create the bucket with replication configuration
   AppBucket:
     Type: AWS::S3::Bucket
+    DependsOn: ReplicationRole  # Explicit dependency
     Properties:
       BucketName: sample-app-bucket-12345
       AccessControl: Private
       ReplicationConfiguration:
-        Role: !GetAtt ReplicationRole.Arn  # This reference is now valid since ReplicationRole is defined first
+        Role: !GetAtt ReplicationRole.Arn
         Rules:
           - Destination:
               Bucket: !Sub 'arn:aws:s3:::${AWS::StackName}-replica'
