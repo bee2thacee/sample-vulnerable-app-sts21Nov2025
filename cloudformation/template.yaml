@@ -8,6 +8,9 @@ Resources:
     Properties:
       BucketName: sample-app-bucket-12345
       AccessControl: Private                 # Fixed: Changed from PublicRead to Private to prevent public access
+      # Added versioning configuration to protect against accidental deletions and maintain object history
+      VersioningConfiguration:
+        Status: Enabled
       # Added cross-region replication configuration for improved data durability and availability
       ReplicationConfiguration:
         Role: !GetAtt ReplicationRole.Arn
