@@ -8,7 +8,6 @@ Resources:
     Properties:
       BucketName: sample-app-bucket-12345
       AccessControl: Private                 # Fixed: Changed from PublicRead to Private to prevent public access
-      ObjectLockEnabled: true               # Added: Enabled Object Lock for enhanced data protection
       # Added cross-region replication configuration for improved data durability and availability
       ReplicationConfiguration:
         Role: !GetAtt ReplicationRole.Arn
@@ -83,4 +82,4 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0                     # Issue 4: SSH open to the world
+          CidrIp: 10.0.0.0/16                     # Fixed: Restricted SSH access to corporate network CIDR
