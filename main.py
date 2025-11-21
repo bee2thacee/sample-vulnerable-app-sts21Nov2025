@@ -3,6 +3,7 @@ import sqlite3
 import subprocess
 import pickle
 import os
+import ast  # Added for safe literal evaluation
 
 # hardcoded API token (Issue 1)
 API_TOKEN = "AKIAEXAMPLERAWTOKEN12345"
@@ -31,8 +32,18 @@ def run_shell(command):
     return subprocess.getoutput(command)
 
 def deserialize_blob(blob):
-    # insecure deserialization of untrusted data (Issue 5)
-    return pickle.loads(blob)
+    # Fixed: Using ast.literal_eval() for safe deserialization of basic data types
+    # This only allows safe literals like strings, numbers, tuples, lists, dicts, booleans, and None
+    try:
+        # First decode bytes to string if needed
+        if isinstance(blob, bytes):
+            blob_str = blob.decode('utf-8')
+        else:
+            blob_str = str(blob)
+        # Use ast.literal_eval for safe evaluation
+        return ast.literal_eval(blob_str)
+    except (ValueError, SyntaxError) as e:
+        raise ValueError(f"Invalid or unsafe data format: {str(e)}")
 
 if __name__ == "__main__":
     # seed some data
